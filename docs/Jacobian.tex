@@ -1,0 +1,284 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{amsmath,amssymb,bm,graphicx,geometry}
+\usepackage{physics}
+\usepackage{caption}
+\usepackage{siunitx}
+\geometry{margin=1in}
+\setlength{\parskip}{0.8em}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\title{\textbf{Jacobian and Singularity Analysis for the Mobile Manipulator}}
+\author{Reference Notes -- Muhammed Elyamani}
+\date{}
+\maketitle
+
+\section*{1. Background}
+
+For a robotic system with generalized coordinates
+\[
+q =
+\begin{bmatrix}
+x_m & y_m & \theta_m & \theta_r & \theta_l &
+\theta_1 & \theta_2 & \theta_3
+\end{bmatrix}^{T},
+\]
+the velocity of a task point (e.g., the center of mass of link~3) is
+\[
+\dot{\bm{p}} = J(q)\,\dot{q},
+\]
+where \(J(q)\in\mathbb{R}^{3\times 8}\) is the \emph{geometric Jacobian} that maps joint and base velocities to Cartesian velocity of the point.
+
+---
+
+\section*{2. Full and Reduced Jacobians}
+
+\subsection*{2.1 Full Jacobian}
+The \texttt{full} Jacobian $J_{\text{full}}$ is obtained by differentiating the COM position with respect to \emph{all} generalized coordinates:
+\[
+J_{\text{full}} = \frac{\partial \bm{p}}{\partial q}.
+\]
+It represents the kinematic coupling of every coordinate---including nonholonomic base variables---to the end--effector motion.
+The scalar manipulability measure is often computed as
+\[
+\mu_{\text{full}} = \det(J_{\text{full}}J_{\text{full}}^{T}).
+\]
+Although informative geometrically, $\mu_{\text{full}}$ overestimates the dexterity of the real robot because
+$x_m$, $y_m$, and $\theta_m$ are \emph{not independently actuated}.
+
+\vspace{1em}
+\textbf{Example (symbolic result)}:
+\begin{align*}
+\mu_{\text{full}}
+&= 0.0051\cos\theta_1 + 0.0229\cos\theta_2
+   + 0.0149\cos\theta_1\cos\theta_2
+   + \cdots + 0.0564,
+\end{align*}
+a long trigonometric expression capturing global coupling of all joints.
+
+---
+
+\subsection*{2.2 Differential--Wheel + Arm Jacobian}
+
+In practice, only the wheel angles $(\theta_r,\theta_l)$ and the arm joints $(\theta_1,\theta_2,\theta_3)$ are directly actuated.  
+The corresponding Jacobian subset is
+\[
+J_{\text{mix}} =
+\begin{bmatrix}
+J_{\text{full}}(:,\, [\theta_r,\theta_l,\theta_1,\theta_2,\theta_3])
+\end{bmatrix},
+\]
+leading to the manipulability measure
+\[
+\mu_{\text{mix}} = \det(J_{\text{mix}}J_{\text{mix}}^{T}).
+\]
+
+After parameter substitution and symbolic simplification,
+\[
+\boxed{
+\mu_{\text{mix}}
+= 5.0625\times10^{-6}
+\,\sin^{2}\theta_3
+\,F(\theta_2,\theta_3)
+}
+\]
+with
+\begin{align*}
+F(\theta_2,\theta_3) &=
+18\cos(\theta_3 + 2\theta_2)
++18\cos(2\theta_2)
++4.5\cos(2\theta_3 + 2\theta_2)
+\\ &\quad
++24\cos(\theta_3 + \theta_2)
++48\cos(\theta_2)
++18\cos(\theta_3)
++38.5.
+\end{align*}
+
+---
+
+\section*{3. Interpretation}
+
+\begin{itemize}
+\item $\mu_{\text{mix}} \ge 0$ always, since $J J^{T}$ is positive semidefinite.
+\item Singularities occur when $\mu_{\text{mix}} = 0$:
+\[
+\sin\theta_3 = 0 \quad \text{or} \quad F(\theta_2,\theta_3)=0.
+\]
+\end{itemize}
+
+\subsection*{3.1 Primary (Elbow) Singularity}
+\[
+\sin\theta_3 = 0 \quad\Rightarrow\quad \theta_3 = k\pi.
+\]
+The forearm and upper arm align (fully stretched or folded),
+causing loss of one independent direction of motion.
+This is the classic ``elbow singularity'' that eliminates vertical or radial motion of the COM.
+
+\subsection*{3.2 Coupling Singularity}
+When \(F(\theta_2,\theta_3)=0\),
+certain combinations of shoulder and elbow elevation make
+the wheel--induced motion directions line up with the arm's motion, again
+reducing the rank of $J_{\text{mix}}$.
+These correspond to specific \((\theta_2,\theta_3)\) surfaces in configuration space.
+
+---
+
+\section*{4. Practical Implications}
+
+This section summarizes how the Jacobian and its singular values influence
+\emph{real} motion control, trajectory planning, and numerical stability
+for the mobile manipulator.  
+While the previous derivations identify the singular conditions analytically,
+the following points describe how to interpret and use them in practice.
+
+\subsection*{4.1 Most Sensitive Joints}
+The analysis of $\mu_{\text{mix}}$ shows that the manipulator's
+configuration is dominated by the shoulder and elbow joints
+$(\theta_2,\theta_3)$, which primarily control the arm's
+\emph{elevation} and \emph{reach}.
+When these joints become aligned (for instance,
+$\theta_3 \approx 0$ or $\pi$), the arm loses one independent direction of
+motion and the Jacobian columns become nearly dependent.
+In such cases:
+\begin{itemize}
+  \item The robot can still move, but only along a restricted set of directions.
+  \item Small end--effector motions may require very large joint velocities.
+  \item Control signals may saturate or oscillate due to numerical
+        amplification of errors.
+\end{itemize}
+Therefore, avoiding extended or folded elbow configurations is essential
+for maintaining full dexterity.
+
+\subsection*{4.2 Dexterity and Conditioning Metrics}
+A reliable measure of how ``healthy'' a configuration is
+comes from the \textbf{smallest singular value} of the Jacobian,
+denoted $\sigma_{\min}$.
+If
+\[
+J = U\,\Sigma\,V^{T}, \qquad
+\Sigma = \mathrm{diag}(\sigma_1,\sigma_2,\sigma_3),
+\]
+then $\sigma_{\min}$ represents the smallest stretching factor of the
+mapping from joint velocity space to task space.
+\begin{itemize}
+  \item Large $\sigma_{\min}$ $\Rightarrow$ well--conditioned;
+        the end--effector can move freely in all directions.
+  \item Small $\sigma_{\min}$ $\Rightarrow$ near a singular posture;
+        some task directions become difficult or impossible to achieve.
+  \item $\sigma_{\min} = 0$ $\Rightarrow$ true singularity (rank deficiency).
+\end{itemize}
+In simulations or experiments, monitor either $\sigma_{\min}$
+or the condition number
+$\kappa = \sigma_{\max}/\sigma_{\min}$.
+A typical warning threshold is
+$\sigma_{\min} < 10^{-3}$ or $\kappa > 10^{3}$,
+depending on system scaling.
+
+\subsection*{4.3 Exploiting Redundancy and Base Motion}
+When the manipulator approaches a low--dexterity region,
+the extra degrees of freedom of the system
+can be used to ``escape'' singularity.
+Two effective strategies are:
+\begin{enumerate}
+  \item Adjust the azimuth joint $\theta_1$
+        to reorient the arm around the vertical axis,
+        restoring independent directions of motion.
+  \item Move the mobile base slightly using the wheel actuators
+        to modify the global pose of the arm,
+        thereby improving the local conditioning of $J_{\text{mix}}$.
+\end{enumerate}
+Such redundancy resolution can be formulated through secondary objectives,
+for example,
+\[
+\dot{q} = J^{+}\dot{\bm{p}}_{\mathrm{des}}
+          + (I - J^{+}J)\dot{q}_{\mathrm{null}},
+\]
+where $\dot{q}_{\mathrm{null}}$ steers the robot away from singularities
+without affecting the primary end--effector task.
+
+\subsection*{4.4 Visualization and Workspace Mapping}
+To build intuition about safe and unsafe regions,
+evaluate $\mu_{\text{mix}}(\theta_2,\theta_3)$ or $\sigma_{\min}(\theta_2,\theta_3)$
+over a dense grid covering the feasible joint limits.
+Plotting these quantities as a color map reveals:
+\begin{itemize}
+  \item High--manipulability zones (bright colors)
+        where the arm can move easily in all directions.
+  \item Narrow valleys (dark colors)
+        corresponding to singular surfaces in the $(\theta_2,\theta_3)$ plane.
+\end{itemize}
+This graphical insight is invaluable for trajectory planners,
+which can be programmed to stay within high--manipulability regions.
+
+\subsection*{4.5 Controller Design Considerations}
+Controllers based on inverse kinematics or feedback linearization
+depend directly on $J$ or its pseudoinverse $J^{+}$.
+Close to singularities:
+\begin{itemize}
+  \item The pseudoinverse amplifies measurement noise,
+        causing erratic joint velocity commands.
+  \item Numerical inversion becomes unstable or undefined.
+  \item Force control formulations using $J^{T}$ lose the ability
+        to resist loads in certain directions.
+\end{itemize}
+In practice, implement a \emph{damped least--squares} inverse,
+\[
+J^{\#} = J^{T}(J J^{T} + \lambda^2 I)^{-1},
+\]
+where $\lambda$ is a small damping factor (e.g., $10^{-3}$),
+which stabilizes the control law in near--singular zones.
+
+\subsection*{4.6 Summary of Practical Guidelines}
+\begin{enumerate}
+  \item Keep $\theta_3$ away from $0$ and $\pi$ whenever possible.
+  \item Monitor $\sigma_{\min}$ or $\det(JJ^{T})$ during motion.
+  \item Use redundant DOFs (base or $\theta_1$) to avoid singular surfaces.
+  \item Employ damped or weighted pseudoinverses for robust control.
+  \item Visualize and log manipulability maps to guide path planning.
+\end{enumerate}
+
+\bigskip
+\textbf{In summary:}
+the elevation joints $(\theta_2,\theta_3)$ govern the robot's
+dexterity envelope.
+By continuously monitoring their effect on the Jacobian and
+avoiding configurations that degrade $\sigma_{\min}$,
+the mobile manipulator maintains stable, smooth, and fully controllable motion
+throughout its workspace.
+
+
+---
+
+\section*{5. Summary Table}
+
+\begin{center}
+\begin{tabular}{|l|p{9cm}|}
+\hline
+\textbf{Perspective} & \textbf{Meaning of Singularity} \\ \hline
+Kinematic &
+Some task--space velocities $\dot{\bm{p}}$ cannot be produced for any joint velocities $\dot{q}$. \\
+\hline
+Geometric &
+Joint axes or links become aligned; a degree of freedom is lost. \\
+\hline
+Control / Inverse Kinematics &
+$J^{-1}$ or $J^{+}$ becomes ill--conditioned, leading to infinite joint velocities. \\
+\hline
+Force (Dual) &
+Certain end--effector forces require infinite torques; the robot becomes mechanically weak. \\
+\hline
+\end{tabular}
+\end{center}
+
+\bigskip
+\textbf{Conclusion:}
+For the studied mobile manipulator,
+singular behavior is driven mainly by the arm’s elevation configuration
+(\(\theta_2,\theta_3\)).
+Maintaining $\theta_3$ away from $0$ or $\pi$ and avoiding
+combinations that nullify $F(\theta_2,\theta_3)$
+ensures full rank of the Jacobian and reliable motion control.
+
+\end{document}

@@ -1,0 +1,108 @@
+function dX = mm_closed_loop_dynamics(t, X, simdata)
+%MM_CLOSED_LOOP_DYNAMICS
+%  Three-layer architecture:
+%    Layer 3 (Planner):   mm_traj_planner_base_arm
+%    Layer 2 (Kinematics): mm_kin_ctrl_base_kanayama + mm_kin_ctrl_arm_pd
+%    Layer 1 (Dynamics):   mm_fb_lin_tracker + mm_forward_dynamics_reduced
+%
+%  This function matches mm_forward_dynamics_reduced signature:
+%       dX = mm_forward_dynamics_reduced(t, X, u_fun)
+%  where u_fun(t,q,eta_dot) returns τ.
+
+    ctrl      = simdata.ctrl;
+    phys      = simdata.phys;
+    gains_eta = simdata.gains_eta;
+
+    base_kin  = ctrl.gains.base_kin;   % Kanayama gains
+    arm_kin   = ctrl.gains.arm_kin;    % arm PD gains
+    traj      = ctrl.traj;
+
+    % -----------------------------
+    % 1) Unpack state
+    % -----------------------------
+    q       = X(1:8);       % [x y theta_m theta_r theta_l q1 q2 q3]
+    eta_dot = X(9:13);      % [theta_r_dot theta_l_dot q1dot q2dot q3dot]
+    eta     = q(4:8);
+    x_b   = q(1);
+    y_b   = q(2);
+    th_b  = q(3);
+    q_arm = q(6:8);         % [q1 q2 q3]
+    qd_arm = eta_dot(3:5);  % [q1dot q2dot q3dot]
+
+    % -----------------------------
+    % 2) Layer 3 – High-level planner (task-space ref)
+    % -----------------------------
+    % Online SE(2) + arm reference at time t
+    % [base_ref, arm_ref] = mm_traj_planner_base_arm(t, traj);
+    % base_ref: .x, .y, .theta, .v_r, .omega_r
+    % arm_ref:  .q, .qdot, .qddot
+
+    % -----------------------------
+    % 3) Layer 2 – Kinematic controllers
+    % -----------------------------
+    % (a) Base: Kanayama controller → commanded v, omega
+    % [v_cmd, omega_cmd, ~] = mm_kin_ctrl_base_kanayama( ...
+    %                             [x_b; y_b; th_b], ...
+    %                             base_ref, ...
+    %                             base_kin, ...
+    %                             phys);
+
+    % (b) Arm: velocity-level PD in joint space
+    % qdot_cmd = mm_kin_ctrl_arm_pd( ...
+    %                 q_arm, qd_arm, arm_ref, ...
+    %                 arm_kin.Kp, arm_kin.Kd);
+
+    % Map commanded base velocities → wheel rates
+    % [theta_r_dot_cmd, theta_l_dot_cmd] = mm_base_vel_to_wheel_rates( ...
+    %                                         v_cmd, omega_cmd, phys);
+
+    % -----------------------------
+    % 4) Layer 3 (offline) – Planner-based η references
+    % -----------------------------
+    % Use your precomputed η, ηdot, ηddot (from mm_build_eta_reference)
+    % as position-level references:
+    [eta_ref, eta_dot_ref, eta_ddot_ref] = mm_interp_eta_ref(ctrl.ref, t);
+    % eta_ref      : [θr_ref θl_ref q1_ref q2_ref q3_ref]^T
+    % eta_dot_ref  : feedforward velocities from planner
+    % eta_ddot_ref : feedforward accelerations from planner
+
+
+    %% -----------------------------
+    % 5) Compose dynamic layer targets (η_d, η̇_d, η̈_d)
+    %% -----------------------------
+    
+    eta_d      = eta_ref;       % POSITION tracking follows planner
+    eta_dot_d  = eta_dot_ref;   % start from planner velocities
+    eta_ddot_d = eta_ddot_ref;  % planner accelerations
+    
+    % Wheel DOFs: replace velocity with Kanayama correction
+    % eta_dot_d(1) = theta_r_dot_cmd;
+    % eta_dot_d(2) = theta_l_dot_cmd;
+    
+    % Arm DOFs: replace velocity with joint PD correction
+    % eta_dot_d(3:5) = qdot_cmd(:);
+
+
+    % -----------------------------
+    % 6) Build torque generator u_fun(t, q, eta_dot)
+    % -----------------------------
+    % NOTE:
+    %   mm_forward_dynamics_reduced will call:
+    %     u = u_fun(t, q_local, eta_dot_local)
+    %   at the SAME time t passed to this function.
+    %
+    %   We close over (eta_d, eta_dot_d, eta_ddot_d) computed above
+    %   to produce a torque consistent with the three-layer logic.
+
+    u_fun = @(t_local, q_local, eta_dot_local) ...
+                mm_fb_lin_tracker( ...
+                    t_local, ...
+                    [q_local; eta_dot_local], ...          % X_local
+                    eta_d, eta_dot_d, eta_ddot_d, ...      % dynamic refs
+                    gains_eta, phys);
+
+    % -----------------------------
+    % 7) Call reduced dynamics with our torque generator
+    % -----------------------------
+    dX = mm_forward_dynamics_reduced(t, X, u_fun);
+end
