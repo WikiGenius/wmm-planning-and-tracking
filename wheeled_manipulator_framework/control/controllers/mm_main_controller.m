@@ -75,8 +75,11 @@ function mm_main_controller()
     %% --------------------------------------------------------------
     % 9) Visualization
     %% --------------------------------------------------------------
-    mm_plot_results_controller( ...
-        t_sol, X_sol, ctrl, base_ref_all, arm_ref_all, phys);
+    tau_sol = [];
+    E_sol = [];
+    mm_plot_results_controller(t_sol, X_sol, ctrl, base_ref_all, arm_ref_all, phys, ...
+                           tau_sol, E_sol);
+
 
     fprintf('✅ Simulation finished.\n');
 end
