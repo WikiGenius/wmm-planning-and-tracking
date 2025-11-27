@@ -31,11 +31,11 @@ function traj = mm_scenario_basic(phys)
     % 2) Base pose (SE(2)) start & goal
     %% --------------------------------------------------------------
     % Frame in which YOU specify the poses: 'B' (mount) or 'M' (center)
-    traj.base_input_frame = 'B';   % change to 'M' if you think in center frame
+    traj.base_input_frame = 'M';   % change to 'M' if you think in center frame
 
     % User-specified start / goal pose [x; y; theta] in base_input_frame
     traj.p0_user = [0.0; 0.0; 0.0];   % [x0; y0; theta0]
-    traj.pf_user = [1.0; 1.0; pi];    % [xf; yf; thetaf]
+    traj.pf_user = [1.0; 1.0; pi/4];    % [xf; yf; thetaf]
 
     % Offset of mounting point B relative to center M, expressed in body frame
     traj.offset_MB = struct('dx', phys.d, 'dy', 0.0);
