@@ -32,7 +32,7 @@
     "meta": {
       "units": "SI (m, kg, s, rad)",
       "source": "Table 2",
-      "created": "13-Nov-2025 13:06:28"
+      "created": "27-Nov-2025 03:21:37"
     }
   },
   "move": {
@@ -83,7 +83,7 @@
     "meta": {
       "units_si": "m and rad",
       "source": "Table 3",
-      "created": "13-Nov-2025 13:06:28"
+      "created": "27-Nov-2025 03:21:37"
     }
   }
 }

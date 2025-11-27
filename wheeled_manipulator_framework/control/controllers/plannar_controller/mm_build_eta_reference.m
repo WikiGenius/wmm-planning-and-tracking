@@ -1,89 +1,148 @@
-function [ref, base_ref_all, arm_ref_all] = mm_build_eta_reference(phys, traj, Tf, dt_ref)
+function [ref, base_ref_all, arm_ref_all] = mm_build_eta_reference( ...
+                                phys, traj, Tf, dt)
 %MM_BUILD_ETA_REFERENCE
-%  Precompute η(t), η̇(t), η̈(t) for the entire simulation horizon.
-%  Uses SE(2) planner via mm_traj_planner_base_arm and converts base
-%  trajectory to wheel trajectories (θr, θl).
+%  Offline η, η̇, η̈ reference generator for the mobile manipulator.
 %
-%  Base pose is at O_b: [x_b, y_b, theta_m].
+%  Uses:
+%    [base_ref, arm_ref] = mm_traj_planner_base_arm(t, traj, phys)
+%
+%  Then:
+%    - converts base (v_r, omega_r) → wheel rates
+%    - integrates wheel angles
+%    - collects arm joint trajectories
+%    - computes η̈ via finite differences (for feedforward)
+%
+%  Inputs:
+%    phys : physical params (must contain phys.r, phys.L)
+%    traj : scenario struct
+%    Tf   : final time
+%    dt   : time step for reference grid
+%
+%  Outputs:
+%    ref : struct with fields
+%           .t         : 1xN time grid
+%           .eta       : 5xN (θr, θl, q1, q2, q3)
+%           .eta_dot   : 5xN
+%           .eta_ddot  : 5xN
+%    base_ref_all : struct with arrays for plotting
+%    arm_ref_all  : struct with arrays for plotting
 
-    %% 1) Time grid consistency
-    if isfield(traj,'Tf') && abs(traj.Tf - Tf) > 1e-12
-        warning('mm_build_eta_reference:InconsistentTf', ...
-           'Tf argument (%.4f) differs from traj.Tf (%.4f). Using traj.Tf.', ...
-            Tf, traj.Tf);
+    % ----------------------------------
+    % Time grid
+    % ----------------------------------
+    t_vec = 0:dt:Tf;
+    N     = numel(t_vec);
+
+    % ----------------------------------
+    % Preallocate arrays
+    % ----------------------------------
+    eta      = zeros(5, N);
+    eta_dot  = zeros(5, N);
+    eta_ddot = zeros(5, N);   % filled later via finite diff
+
+    base_ref_all = struct();
+    arm_ref_all  = struct();
+
+    base_ref_all.t      = t_vec;
+    base_ref_all.x      = zeros(1,N);
+    base_ref_all.y      = zeros(1,N);
+    base_ref_all.theta  = zeros(1,N);
+    base_ref_all.v_r    = zeros(1,N);
+    base_ref_all.omega_r= zeros(1,N);
+
+    arm_ref_all.q       = zeros(3,N);
+    arm_ref_all.qdot    = zeros(3,N);
+    arm_ref_all.qddot   = zeros(3,N);
+
+    % ----------------------------------
+    % Initial wheel angles
+    % ----------------------------------
+    theta_r = 0;
+    theta_l = 0;
+
+    r = phys.r;
+    L = phys.L;
+
+    % ----------------------------------
+    % Loop over time, build η and η̇
+    % ----------------------------------
+    for k = 1:N
+        t = t_vec(k);
+        % upgrade in future to get v_dot, omega_dot to get etta_ddot for
+        % the base. will give use better smoothness rather than taking
+        % second derivatives
+        [base_ref, arm_ref] = mm_traj_planner_base_arm(t, traj, phys);
+
+        v     = base_ref.v_r;
+        omega = base_ref.omega_r;
+
+        % wheel rates
+        theta_r_dot = (1/r) * (v + L*omega);
+        theta_l_dot = (1/r) * (v - L*omega);
+
+        % integrate wheel angles (Euler)
+        if k == 1
+            dt_local = 0;
+        else
+            dt_local = t_vec(k) - t_vec(k-1);
+        end
+        theta_r = theta_r + theta_r_dot * dt_local;
+        theta_l = theta_l + theta_l_dot * dt_local;
+
+        % store base refs
+        base_ref_all.x(k)       = base_ref.x;
+        base_ref_all.y(k)       = base_ref.y;
+        base_ref_all.theta(k)   = base_ref.theta;
+        base_ref_all.v_r(k)     = v;
+        base_ref_all.omega_r(k) = omega;
+
+        % store arm refs
+        arm_ref_all.q(:,k)      = arm_ref.q;
+        arm_ref_all.qdot(:,k)   = arm_ref.qdot;
+        arm_ref_all.qddot(:,k)  = arm_ref.qddot;
+
+        % assemble η and η̇ at this time
+        eta(:,k) = [theta_r; theta_l; arm_ref.q(:)];
+
+        eta_dot(:,k) = [theta_r_dot;
+                        theta_l_dot;
+                        arm_ref.qdot(:)];
     end
-    Tf = traj.Tf;
 
-    t_ref = (0:dt_ref:Tf).';
-    Nd    = numel(t_ref);
-
-    %% 2) Preallocate
-    base_ref_all = zeros(Nd,3);   % [x_b  y_b  theta_m]
-    arm_ref_all  = zeros(Nd,3);   % [theta1 theta2 theta3]
-
-    v_r_all     = zeros(Nd,1);    % commanded base linear velocity v_c
-    omega_r_all = zeros(Nd,1);    % commanded base angular velocity ω_c
-
-    arm_q_all   = zeros(Nd,3);
-    arm_qd_all  = zeros(Nd,3);
-    arm_qdd_all = zeros(Nd,3);
-
-    %% 3) Sample trajectory planner
-    for k = 1:Nd
-        t = t_ref(k);
-
-        [base_k, arm_k] = mm_traj_planner_base_arm(t, traj);
-
-        % Base references
-        base_ref_all(k,:) = [base_k.x, base_k.y, base_k.theta];
-        v_r_all(k)        = base_k.v_r;
-        omega_r_all(k)    = base_k.omega_r;
-
-        % Arm references
-        arm_ref_all(k,:)  = arm_k.q(:).';
-        arm_q_all(k,:)    = arm_k.q(:).';
-        arm_qd_all(k,:)   = arm_k.qdot(:).';
-        arm_qdd_all(k,:)  = arm_k.qddot(:).';
+    % ----------------------------------
+    % Approximate η̈ via finite differences
+    % ----------------------------------
+    for i = 1:5
+        eta_ddot(i,:) = finite_diff_second_order(eta_dot(i,:), dt);
     end
 
-    %% 4) Differentiate base_ref_all to get ẋ_b, ẏ_b, θ̇_m
-    x_b_all     = base_ref_all(:,1);
-    y_b_all     = base_ref_all(:,2);
-    theta_m_all = base_ref_all(:,3);
-
-    x_b_dot_all     = gradient(x_b_all,     t_ref);
-    y_b_dot_all     = gradient(y_b_all,     t_ref);
-    theta_m_dot_all = gradient(theta_m_all, t_ref); %#ok<NASGU> % (not used now, but kept for completeness)
-
-    %% 5) Base → wheel (exact format mm_base_vel_to_wheel_rates)
-    % Requires phys.r, phys.L, phys.d
-    if ~isfield(phys,'d')
-        error('phys struct must contain phys.d (offset of O_b from axle).');
-    end
-
-    [theta_r_dot_d, theta_l_dot_d] = mm_base_vel_to_wheel_rates( ...
-        v_r_all, omega_r_all, x_b_dot_all, y_b_dot_all, theta_m_all, phys);
-
-    % Integrate to get θ_r, θ_l
-    theta_r_d = cumtrapz(t_ref, theta_r_dot_d);
-    theta_l_d = cumtrapz(t_ref, theta_l_dot_d);
-
-    % Differentiate to get θ̈_r, θ̈_l
-    theta_r_ddot_d = gradient(theta_r_dot_d, t_ref);
-    theta_l_ddot_d = gradient(theta_l_dot_d, t_ref);
-
-    %% 6) Assemble η, η̇, η̈
-    % η      = [θ_r, θ_l, q_arm]
-    % η̇     = [θ̇_r, θ̇_l, q̇_arm]
-    % η̈     = [θ̈_r, θ̈_l, q̈_arm]
-    eta_all      = [theta_r_d,      theta_l_d,      arm_q_all];
-    eta_dot_all  = [theta_r_dot_d,  theta_l_dot_d,  arm_qd_all];
-    eta_ddot_all = [theta_r_ddot_d, theta_l_ddot_d, arm_qdd_all];
-
-    %% 7) Pack output struct
+    % ----------------------------------
+    % Pack into ref struct
+    % ----------------------------------
     ref = struct();
-    ref.t        = t_ref;
-    ref.eta      = eta_all;
-    ref.eta_dot  = eta_dot_all;
-    ref.eta_ddot = eta_ddot_all;
+    ref.t        = t_vec;
+    ref.eta      = eta;
+    ref.eta_dot  = eta_dot;
+    ref.eta_ddot = eta_ddot;
+end
+
+% ==================================================================
+%  Simple 2nd derivative approximator (central differences)
+% ==================================================================
+function dd = finite_diff_second_order(dx, dt)
+    N  = numel(dx);
+    dd = zeros(1,N);
+
+    if N < 3 || dt <= 0
+        return;
+    end
+
+    % interior points: central difference
+    for k = 2:N-1
+        dd(k) = (dx(k+1) - dx(k-1)) / (2*dt);
+    end
+
+    % endpoints: forward/backward difference
+    dd(1) = (dx(2) - dx(1)) / dt;
+    dd(N) = (dx(N) - dx(N-1)) / dt;
 end

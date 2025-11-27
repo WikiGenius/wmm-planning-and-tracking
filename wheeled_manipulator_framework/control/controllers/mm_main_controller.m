@@ -1,4 +1,13 @@
 function mm_main_controller()
+%MM_MAIN_CONTROLLER
+%  Top-level script for mobile manipulator closed-loop simulation.
+%  Currently:
+%    - Uses precomputed η-reference (no online geometric planner).
+%    - Tracks η, η̇, η̈ using feedback linearization on reduced dynamics.
+%
+%  Ready for future extension:
+%    - Online planner: mm_traj_planner_base_arm
+%    - Kinematic layer: mm_kin_ctrl_base_kanayama, mm_kin_ctrl_arm_pd
 
     clc; close all;
     fprintf('▶ Starting mobile manipulator tracking simulation...\n');
@@ -10,7 +19,9 @@ function mm_main_controller()
     addpath(fullfile(project_root, 'dynamics_library'));
     addpath(fullfile(project_root, 'controllers'));
     addpath(fullfile(project_root, 'data'));
+    addpath(fullfile(project_root, 'transformations'));
     fprintf('💠 Paths added.\n');
+
     %% --------------------------------------------------------------
     % 2) Load physical parameters
     %% --------------------------------------------------------------
@@ -20,15 +31,15 @@ function mm_main_controller()
     %% --------------------------------------------------------------
     % 3) Scenario (task specification)
     %% --------------------------------------------------------------
-    traj = mm_scenario_basic();
+    traj = mm_scenario_basic(phys);
 
     %% --------------------------------------------------------------
-    % 4) Centralized controller gains (NO planning inside)
+    % 4) Controller configuration (no planning inside)
     %% --------------------------------------------------------------
     ctrl = mm_controller_init(phys, traj);
 
     %% --------------------------------------------------------------
-    % 5) PRECOMPUTE η-REFERENCE FOR PLOTTING / FEEDFORWARD
+    % 5) PRECOMPUTE η-REFERENCE (offline planner, for FL / plotting)
     %% --------------------------------------------------------------
     dt_ref = 0.01;
     [ctrl.ref, base_ref_all, arm_ref_all] = mm_build_eta_reference( ...
@@ -38,20 +49,19 @@ function mm_main_controller()
     % 6) Initial state [q ; η̇]
     %% --------------------------------------------------------------
     q0 = [
-        traj.p0;          % [x y theta]
-        0; 0;             % wheel angles
-        traj.q0_arm(:)    % arm joints
+        traj.p0_B;          % [x_b; y_b; theta_m]
+        0; 0;             % wheel angles [theta_r; theta_l]
+        traj.q0_arm(:)    % arm joints [q1; q2; q3]
     ];
 
-    eta_dot0 = zeros(5,1);
-    X0 = [q0; eta_dot0];
+    eta_dot0 = zeros(5,1);   % [theta_r_dot; theta_l_dot; q1dot; q2dot; q3dot]
+    X0       = [q0; eta_dot0];
 
     %% --------------------------------------------------------------
     % 7) Pack simulation data
     %% --------------------------------------------------------------
-    simdata.ctrl      = ctrl;
-    simdata.gains_eta = ctrl.gains.eta;
-    simdata.phys      = phys;
+    simdata.ctrl = ctrl;
+    simdata.phys = phys;
 
     %% --------------------------------------------------------------
     % 8) Closed-loop ODE integration
@@ -68,4 +78,5 @@ function mm_main_controller()
     mm_plot_results_controller( ...
         t_sol, X_sol, ctrl, base_ref_all, arm_ref_all, phys);
 
+    fprintf('✅ Simulation finished.\n');
 end

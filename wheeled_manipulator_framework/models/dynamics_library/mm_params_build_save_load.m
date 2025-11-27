@@ -37,6 +37,7 @@ phys = struct();
 % Geometry 
 phys.L        = 0.250;    % [m] half wheelbase
 phys.d        = 0.270;    % [m] lateral offset / arm base offset
+% phys.d        = 0.001;    % for debug
 phys.r        = 0.075;    % [m] wheel radius
 
 phys.L_0      = 0.325;    % [m] 
