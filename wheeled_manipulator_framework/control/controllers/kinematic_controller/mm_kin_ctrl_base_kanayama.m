@@ -88,9 +88,9 @@ function [v_c, omega_c, err] = mm_kin_ctrl_base_kanayama(q, base_ref, gains, phy
     % Kanayama tracking law
     % -----------------------------
     v_c     = v_r*cos(th_e) + Kx * x_e;
-    v_c
+    
     omega_c = omega_r + v_r*(Ky*y_e + Kth*sin(th_e));
-omega_c
+
     % -----------------------------
     % Optional saturation from phys
     % -----------------------------
