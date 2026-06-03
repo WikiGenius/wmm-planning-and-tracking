@@ -55,6 +55,12 @@ The images below are real public artifacts from the project presentations and re
 |---|---|---|
 | ![Base planner flowchart](media/demo/base_planner_flowchart.png) | ![Arm planner flowchart](media/demo/arm_planner_flowchart.png) | ![Kanayama tracking flowchart](media/demo/kanayama_tracking_flowchart.png) |
 
+### Conceptual Block Diagrams
+
+| Offline motion-planner framework | Feedback-linearization tracking structure |
+|---|---|
+| ![Offline motion-planner framework block diagram](media/demo/offline_motion_planner_block_diagram.png) | ![Feedback-linearization tracking block diagram](media/demo/feedback_linearization_block_diagram.jpeg) |
+
 ### Simulation Outputs
 
 | Planner-only base path | Full stack under disturbance | Tracking error under disturbance |
