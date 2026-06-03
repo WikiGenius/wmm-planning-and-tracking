@@ -64,6 +64,6 @@ ctrl.gains.base_kin = struct( ...
     % Planning happens in:
     %   mm_traj_planner_base_arm
     % η-reference for plots can be computed outside if needed.
-% ctrl.flags.use_online_planner = true;   % default
+ctrl.flags.use_online_planner = true;   % default
 
 end

@@ -70,7 +70,7 @@ function mm_main_controller()
     
     % % Example 1: constant bias on joint 2
     % simdata.dist_fun = @(t, q, eta_dot) [0; 0; 0.5; 0; 0];
-    % simdata.dist_fun = @(t, q, eta_dot) [0.5; 0.5; 0.05; 0.05; 0.05];
+    simdata.dist_fun = @(t, q, eta_dot) [0.5; 0.5; 0.05; 0.05; 0.05];
 
     % % Example 2: sinusoidal torque on wheel 1
     % simdata.dist_fun = @(t, q, eta_dot) [0.2*sin(0.5*t); 0; 0; 0; 0];

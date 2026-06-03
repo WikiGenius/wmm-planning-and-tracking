@@ -1,0 +1,168 @@
+\relax 
+\citation{BSTcontrol}
+\citation{kanayamaStableTrackingControl1990a}
+\citation{blochControlStabilizationNonholonomic1992}
+\citation{khatibMobileManipulatorsExpanding1998}
+\citation{yamamotoCoordinatingLocomotionManipulation1994,yamamotoEffectDynamicInteraction1996}
+\citation{serajiUnifiedApproachMotion1998}
+\citation{orioloWMRControlDynamic2002}
+\citation{havilandHolisticApproachReactive2022}
+\citation{thakarManipulatorMotionPlanning2022}
+\citation{pankertPerceptiveModelPredictive2020}
+\citation{zhangCoordinatedPlanningControl2025a}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {I-A}}Background and Motivation}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {I-B}}Problem Statement}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {I-C}}Literature Review}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {I-D}}Contribution}{1}{}\protected@file@percent }
+\citation{blochControlStabilizationNonholonomic1992}
+\citation{prada-jimenezCoupledDynamicModel2019a}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Side view of the mobile manipulator in the $X$--$Z$ plane.}}{2}{}\protected@file@percent }
+\newlabel{fig:Side_view_X_Z_plane}{{1}{2}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {II}System Modeling}{2}{}\protected@file@percent }
+\newlabel{sec:system_modeling}{{II}{2}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}Robot Geometry and Coordinate Frames}{2}{}\protected@file@percent }
+\newlabel{subsec:frames}{{\mbox  {II-A}}{2}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Generalized Coordinates and Actuation}{2}{}\protected@file@percent }
+\newlabel{subsec:q_tau}{{\mbox  {II-B}}{2}{}{}{}}
+\newlabel{eq:q_def}{{1}{2}{}{}{}}
+\newlabel{eq:tau_def}{{2}{2}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Lagrange--d'Alembert Dynamics with Nonholonomic Constraint}{2}{}\protected@file@percent }
+\newlabel{subsec:constrained_dyn}{{\mbox  {II-C}}{2}{}{}{}}
+\newlabel{eq:full_constrained_dyn}{{3}{2}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-D}}Nonholonomic Rolling Constraint}{2}{}\protected@file@percent }
+\newlabel{subsec:nh_constraint}{{\mbox  {II-D}}{2}{}{}{}}
+\newlabel{eq:nonholonomic}{{4}{2}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-E}}Independent Coordinates and Constraint-Consistent Velocity Mapping}{2}{}\protected@file@percent }
+\newlabel{subsec:eta_R}{{\mbox  {II-E}}{2}{}{}{}}
+\newlabel{eq:eta_def}{{5}{2}{}{}{}}
+\newlabel{eq:qdot_R}{{6}{2}{}{}{}}
+\newlabel{eq:AR0}{{7}{2}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-F}}Wheel-Rate to Base-Twist Mapping at the Mounting Frame}{2}{}\protected@file@percent }
+\newlabel{subsec:Rbase}{{\mbox  {II-F}}{2}{}{}{}}
+\newlabel{eq:base_map}{{8}{2}{}{}{}}
+\citation{prada-jimenezCoupledDynamicModel2019a}
+\newlabel{eq:Rbase}{{9}{3}{}{}{}}
+\newlabel{eq:R_full}{{10}{3}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-G}}Reduced-Order Dynamics in Independent Coordinates}{3}{}\protected@file@percent }
+\newlabel{subsec:reduced_dyn}{{\mbox  {II-G}}{3}{}{}{}}
+\newlabel{eq:qddot_R}{{11}{3}{}{}{}}
+\newlabel{eq:reduced_dyn}{{12}{3}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-H}}Remark on Simulation Consistency}{3}{}\protected@file@percent }
+\newlabel{subsec:sim_consistency}{{\mbox  {II-H}}{3}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {III}Three-Layer Control Architecture}{3}{}\protected@file@percent }
+\newlabel{sec:three_layer_arch}{{III}{3}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Signal Flow and Interfaces}{3}{}\protected@file@percent }
+\newlabel{subsec:signals_interfaces}{{\mbox  {III-A}}{3}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Layer 3: Motion Planning}{3}{}\protected@file@percent }
+\newlabel{subsec:layer3_planning}{{\mbox  {III-B}}{3}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-B}1}Planning frames}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-B}2}Base reference generation (R--T--R with quintic timing)}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-B}3}Mapping from center frame $M$ to mounting frame $B$}{3}{}\protected@file@percent }
+\newlabel{eq:vr_omega_r}{{23}{3}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-B}4}Arm joint reference generation}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Layer 2: Kinematic Coordination}{4}{}\protected@file@percent }
+\newlabel{subsec:layer_kinematics}{{\mbox  {III-C}}{4}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-C}1}Base kinematic tracking (Kanayama-type law)}{4}{}\protected@file@percent }
+\newlabel{eq:kanayama_v}{{27}{4}{}{}{}}
+\newlabel{eq:kanayama_omega}{{28}{4}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-C}2}Arm joint velocity control (PD with feedforward)}{4}{}\protected@file@percent }
+\newlabel{eq:arm_pd}{{30}{4}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-C}3}Mapping to independent coordinate references}{4}{}\protected@file@percent }
+\newlabel{eq:wheel_rates_from_vw}{{31}{4}{}{}{}}
+\newlabel{eq:eta_dot_ref}{{32}{4}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Layer 1: Dynamic Tracking Control}{4}{}\protected@file@percent }
+\newlabel{subsec:layer_dynamics}{{\mbox  {III-D}}{4}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-D}1}Reduced dynamic model}{4}{}\protected@file@percent }
+\newlabel{eq:reduced_dyn_layer1}{{33}{4}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-D}2}Tracking error dynamics and virtual control}{4}{}\protected@file@percent }
+\newlabel{eq:virtual_v}{{35}{4}{}{}{}}
+\newlabel{eq:err_dyn}{{36}{4}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-D}3}Feedback linearization torque law}{4}{}\protected@file@percent }
+\newlabel{eq:tau_fbl}{{37}{4}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-D}4}Lyapunov stability}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-D}5}Disturbance injection for robustness evaluation}{4}{}\protected@file@percent }
+\newlabel{eq:tau_disturbed}{{40}{4}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-E}}Effort and Energy Metrics}{4}{}\protected@file@percent }
+\newlabel{subsec:effort_energy}{{\mbox  {III-E}}{4}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Physical parameters used in simulation (SI units).}}{5}{}\protected@file@percent }
+\newlabel{tab:phys_params}{{I}{5}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Scenario boundary conditions used in simulation.}}{5}{}\protected@file@percent }
+\newlabel{tab:scenario_bc}{{II}{5}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Simulation Setup}{5}{}\protected@file@percent }
+\newlabel{sec:sim_setup}{{IV}{5}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Robot Physical Parameters}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Scenario Boundary Conditions}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Controller Gains and Tuning Rationale}{5}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Gains used in the kinematic and dynamic control layers.}}{5}{}\protected@file@percent }
+\newlabel{tab:gains}{{III}{5}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Numerical Integration, Disturbances, and Metrics}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {V}Simulation Results}{5}{}\protected@file@percent }
+\newlabel{sec:sim_results}{{V}{5}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Layer~1 only (dynamic feedback linearization): base motion in the world frame. Layer~1 enforces torque-level tracking but requires a task-consistent reference generated by higher layers.}}{6}{}\protected@file@percent }
+\newlabel{fig:E1_layer1_base}{{2}{6}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Layer~1 Only: Dynamic Tracking (Feedback Linearization)}{6}{}\protected@file@percent }
+\newlabel{subsec:res_layer1_only}{{\mbox  {V-A}}{6}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Planner Only: Offline Reference Generation (Open-Loop)}{6}{}\protected@file@percent }
+\newlabel{subsec:res_planner_only}{{\mbox  {V-B}}{6}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Disturbance Without Feedback Compensation}{6}{}\protected@file@percent }
+\newlabel{subsec:res_dist_no_feedback}{{\mbox  {V-C}}{6}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Planner-only (open-loop): planned base path in the world frame.}}{6}{}\protected@file@percent }
+\newlabel{fig:E2_planner_base}{{3}{6}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Planner-only (open-loop): reference $\bm  {\eta }_d(t)$ (wheel angles and arm joint angles).}}{6}{}\protected@file@percent }
+\newlabel{fig:E2_planner_eta}{{4}{6}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}Full Three-Layer Stack Under Disturbance}{6}{}\protected@file@percent }
+\newlabel{subsec:res_full_stack_dist}{{\mbox  {V-D}}{6}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Planner-only (open-loop): reference $\dot  {\bm  {\eta }}_d(t)$.}}{7}{}\protected@file@percent }
+\newlabel{fig:E2_planner_etadot}{{5}{7}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Planner-only (open-loop): reference $\ddot  {\bm  {\eta }}_d(t)$ (smooth acceleration profiles suitable for torque-level tracking).}}{7}{}\protected@file@percent }
+\newlabel{fig:E2_planner_etaddot}{{6}{7}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Summary of Key Findings}{7}{}\protected@file@percent }
+\newlabel{subsec:res_summary}{{\mbox  {V-E}}{7}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Discussion}{7}{}\protected@file@percent }
+\newlabel{sec:discussion}{{VI}{7}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Why Layer~1 (Dynamics) Is Necessary but Not Sufficient}{7}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Under torque disturbance without full feedback compensation: base path deviates from the desired motion.}}{7}{}\protected@file@percent }
+\newlabel{fig:E3_dist_base}{{7}{7}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Under torque disturbance without full feedback compensation: deviation in $\bm  {\eta }(t)$.}}{7}{}\protected@file@percent }
+\newlabel{fig:E3_dist_eta}{{8}{7}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}Role of the Planner and Importance of Smooth References}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-C}}Why a Kinematic Layer Is Needed Under Disturbances}{7}{}\protected@file@percent }
+\bibstyle{IEEEtran}
+\bibdata{mm_refs}
+\bibcite{kanayamaStableTrackingControl1990a}{1}
+\bibcite{blochControlStabilizationNonholonomic1992}{2}
+\bibcite{khatibMobileManipulatorsExpanding1998}{3}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Full three-layer stack under torque disturbance: base path in the world frame remains close to the desired motion.}}{8}{}\protected@file@percent }
+\newlabel{fig:E4_dist_base}{{9}{8}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Full stack under disturbance: tracking in $\bm  {\eta }(t)$.}}{8}{}\protected@file@percent }
+\newlabel{fig:E4_dist_eta}{{10}{8}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-D}}Energy and Effort Interpretation}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-E}}Limitations and Practical Considerations}{8}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Full stack under disturbance: tracking in $\dot  {\bm  {\eta }}(t)$.}}{8}{}\protected@file@percent }
+\newlabel{fig:E4_dist_etadot}{{11}{8}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Full stack under disturbance: tracking in $\ddot  {\bm  {\eta }}(t)$.}}{8}{}\protected@file@percent }
+\newlabel{fig:E4_dist_etaddot}{{12}{8}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Conclusion}{8}{}\protected@file@percent }
+\newlabel{sec:conclusion}{{VII}{8}{}{}{}}
+\@writefile{toc}{\contentsline {section}{References}{8}{}\protected@file@percent }
+\bibcite{yamamotoCoordinatingLocomotionManipulation1994}{4}
+\bibcite{yamamotoEffectDynamicInteraction1996}{5}
+\bibcite{serajiUnifiedApproachMotion1998}{6}
+\bibcite{orioloWMRControlDynamic2002}{7}
+\bibcite{havilandHolisticApproachReactive2022}{8}
+\bibcite{thakarManipulatorMotionPlanning2022}{9}
+\bibcite{pankertPerceptiveModelPredictive2020}{10}
+\bibcite{zhangCoordinatedPlanningControl2025a}{11}
+\bibcite{prada-jimenezCoupledDynamicModel2019a}{12}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Full stack under disturbance: tracking error in $\bm  {\eta }$ converges and remains bounded during disturbance transients.}}{9}{}\protected@file@percent }
+\newlabel{fig:E4_dist_err_eta}{{13}{9}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Full stack under disturbance: wheel torques.}}{9}{}\protected@file@percent }
+\newlabel{fig:E4_dist_tau_wheels}{{14}{9}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Full stack under disturbance: arm joint torques.}}{9}{}\protected@file@percent }
+\newlabel{fig:E4_dist_tau_arm}{{15}{9}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Full stack under disturbance: instantaneous mechanical power $P(t)$ (watts).}}{9}{}\protected@file@percent }
+\newlabel{fig:E4_dist_power}{{16}{9}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Full stack under disturbance: accumulated control energy $E(t)$ (joules).}}{9}{}\protected@file@percent }
+\newlabel{fig:E4_dist_energy}{{17}{9}{}{}{}}
+\gdef \@abspage@last{9}
