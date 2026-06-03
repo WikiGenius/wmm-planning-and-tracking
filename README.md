@@ -45,6 +45,62 @@ This repository supports my broader robotics/control research identity by showin
 - Post-processing for wheel/arm torques, power, energy, and tracking error.
 - MATLAB live scripts, functions, tests, report figures, and presentation visuals.
 
+## Mathematical Core
+
+The implementation uses independent reduced coordinates for the two wheel angles and three arm joints:
+
+$$
+\eta =
+\begin{bmatrix}
+\theta_r & \theta_l & q_1 & q_2 & q_3
+\end{bmatrix}^{T},
+\qquad
+\dot{q}=R(q)\dot{\eta}.
+$$
+
+The reduced dynamics tracked by the low-level controller are:
+
+$$
+M_1(q)\ddot{\eta}
++\left(C_1(q,\dot{q})+D_{\eta}\right)\dot{\eta}
++G_1(q)
+=B_1(q)\tau.
+$$
+
+The feedback-linearization layer shapes the reduced-coordinate tracking error with:
+
+$$
+e=\eta-\eta_d,
+\qquad
+\dot{e}=\dot{\eta}-\dot{\eta}_d,
+$$
+
+$$
+v=\ddot{\eta}_d-K_d\dot{e}-K_p e,
+$$
+
+then computes the actuator torques:
+
+$$
+\tau =
+B_1(q)^{-1}
+\left[
+M_1(q)v
++\left(C_1(q,\dot{q})+D_{\eta}\right)\dot{\eta}
++G_1(q)
+\right].
+$$
+
+The planner uses quintic time scaling for smooth segment transitions:
+
+$$
+\sigma(s)=10s^3-15s^4+6s^5,
+\qquad
+s\in[0,1].
+$$
+
+Full derivations and experiment details are provided in the project paper.
+
 ## Demo Gallery
 
 The images below are real public artifacts from the project presentations and report.
