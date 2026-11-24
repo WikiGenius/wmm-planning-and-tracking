@@ -169,6 +169,8 @@ wheeled_manipulator_framework/control/controllers/low_level_control_tracker/
 
 ## How to Run
 
+The instructions below document the original MATLAB workflow. A fresh run on a clean installation has not been independently verified.
+
 Open MATLAB from the repository root, then add the framework folders to the MATLAB path.
 
 Typical workflow:
@@ -229,7 +231,7 @@ The report figures organize the work into four experiment groups:
 
 ## Citation / Acknowledgment
 
-This repository supports the project paper:
+This repository supports the project report/manuscript (publication status is not asserted here):
 
 ```text
 Muhammed Elyamani, Ali Attyatullah Mohammed AlBeladi, and Brahim Brahmi,
