@@ -20,16 +20,16 @@ for k=1:3
     for adaptive=0:1
         x0=[-p.d;0;0;0;0;0;-0.3;0.5;zeros(10,1)];
         [~,x]=ode45(@(t,x) dynamics(t,x,p,k,adaptive),t,x0,opts);
-        error=zeros(size(t)); torque=error; power=error;
+        trackingError=zeros(size(t)); torque=trackingError; power=trackingError;
         for j=1:numel(t)
             [~,tau,e]=dynamics(t(j),x(j,:).',p,k,adaptive);
-            error(j)=norm(e); torque(j)=norm(tau);
+            trackingError(j)=norm(e); torque(j)=norm(tau);
             power(j)=tau.'*x(j,9:13).';
         end
         assert(all(isfinite(x),'all'));
         col=1+adaptive;
-        runs(col)=struct('state',x,'error',error,'torque',torque);
-        data(k,col)=sqrt(trapz(t,error.^2)/10);
+        runs(col)=struct('state',x,'error',trackingError,'torque',torque);
+        data(k,col)=sqrt(trapz(t,trackingError.^2)/10);
         data(k,col+3)=sqrt(trapz(t,torque.^2)/10);
         data(k,col+5)=trapz(t,power);
     end
