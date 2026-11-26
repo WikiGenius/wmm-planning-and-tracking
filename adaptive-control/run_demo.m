@@ -1,6 +1,7 @@
-function results = run_demo(showAnimation)
-% Run all three deterministic comparisons. Pass true for 3-D playback.
-if nargin==0, showAnimation=false; end
+function results = run_demo(showAnimation,gifPath)
+% Run all comparisons. Pass true for 3-D playback; optionally give a GIF path.
+if nargin<1, showAnimation=false; end
+if nargin<2, gifPath=''; end
 root=fileparts(mfilename('fullpath'));
 cfg=jsondecode(fileread(fullfile(root,'parameters.json')));
 p=cfg.phys;
@@ -47,7 +48,7 @@ nexttile; plot(t,[high(1).error high(2).error],'LineWidth',2);
 grid on; xlabel('Time (s)'); ylabel('Joint-space error norm (rad)');
 title('Tracking under asymmetric torque bias'); legend('Nominal','Adaptive');
 exportgraphics(gcf,fullfile(root,'comparison.png'),'Resolution',140);
-if showAnimation, playback(high(2).state,p,t); end
+if showAnimation || ~isempty(gifPath), playback_comparison(high,p,t,gifPath); end
 end
 
 function [dx,tau,e]=dynamics(t,x,p,k,adaptive)
@@ -74,18 +75,54 @@ update(abs(estimate)>=limit & estimate.*update>0)=0;
 dx=[R*u; M\(tau+dist-c-damping-G); update];
 end
 
-function playback(states,p,t)
-figure('Color','w');
-for k=1:5:numel(t)
-    q=states(k,1:8); a=q(3)+q(6);
-    axle=[q(1:2),0]; mount=axle+[p.d*cos(q(3)),p.d*sin(q(3)),p.r+p.L_0];
-    link=@(len,b) len*[cos(a)*cos(b),sin(a)*cos(b),sin(b)];
-    shoulder=mount+link(p.L_1,0); elbow=shoulder+link(p.L_2,q(7));
-    points=[axle;mount;shoulder;elbow;elbow+link(p.L_3,q(7)+q(8))];
-    plot3(states(1:k,1),states(1:k,2),zeros(k,1),'b-'); hold on
-    plot3(points(:,1),points(:,2),points(:,3),'o-','LineWidth',3); hold off
-    axis equal; axis([-1 3 -1 3 -0.5 1.5]); grid on; view(35,25);
-    xlabel('x (m)'); ylabel('y (m)'); zlabel('z (m)');
-    title(sprintf('Adaptive tracking   %.2f s',t(k))); drawnow;
+function playback_comparison(high,p,t,gifPath)
+% The two state histories come from the same high-disturbance simulation.
+f=figure('Color','w','Position',[100 100 900 580]);
+ax=axes(f); hold(ax,'on'); grid(ax,'on'); view(ax,35,25);
+colors=[0.12 0.35 0.85; 0.85 0.16 0.16];
+h=gobjects(3,1);
+h(1)=plot3(ax,[-p.d 2],[0 2-p.d],[0 0],'k--','LineWidth',1.4);
+for j=1:2
+    q=high(j).state;
+    h(j+1)=plot3(ax,q(:,1),q(:,2),zeros(size(t)),'Color',colors(j,:),'LineWidth',1.7);
+end
+body=gobjects(2,1); arm=body; marker=body;
+for j=1:2
+    body(j)=plot3(ax,nan,nan,nan,'Color',colors(j,:),'LineWidth',2,'HandleVisibility','off');
+    arm(j)=plot3(ax,nan,nan,nan,'o-','Color',colors(j,:),'LineWidth',2.5,'HandleVisibility','off');
+    marker(j)=plot3(ax,nan,nan,nan,'o','MarkerFaceColor',colors(j,:),'Color',colors(j,:),'HandleVisibility','off');
+end
+axis(ax,'equal'); axis(ax,[-0.9 3 -0.8 2.8 -0.1 1.25]);
+xlabel(ax,'x (m)'); ylabel(ax,'y (m)'); zlabel(ax,'z (m)');
+legend(ax,h,{'Reference axle path','Nominal','Adaptive'},'Location','northeast');
+title(ax,'Nominal vs adaptive tracking');
+indices=unique([1:10:numel(t),numel(t)]);
+for n=1:numel(indices)
+    k=indices(n);
+    if ~isgraphics(f), return; end
+    for j=1:2
+        q=high(j).state(k,1:8);
+        yaw=q(3); a=yaw+q(6);
+        R=[cos(yaw) -sin(yaw);sin(yaw) cos(yaw)];
+        footprint=[-.18 .39 .39 -.18 -.18;-.26 -.26 .26 .26 -.26];
+        xy=q(1:2).'+R*footprint;
+        set(body(j),'XData',xy(1,:),'YData',xy(2,:),'ZData',p.r*ones(1,5));
+        axle=[q(1:2),0]; mount=axle+[p.d*cos(yaw),p.d*sin(yaw),p.r+p.L_0];
+        link=@(len,b) len*[cos(a)*cos(b),sin(a)*cos(b),sin(b)];
+        shoulder=mount+link(p.L_1,0); elbow=shoulder+link(p.L_2,q(7));
+        points=[mount-[0 0 p.L_0];mount;shoulder;elbow;elbow+link(p.L_3,q(7)+q(8))];
+        set(arm(j),'XData',points(:,1),'YData',points(:,2),'ZData',points(:,3));
+        set(marker(j),'XData',q(1),'YData',q(2),'ZData',0);
+    end
+    title(ax,sprintf('High asymmetric torque bias | t = %.2f s',t(k)));
+    drawnow;
+    if ~isempty(gifPath)
+        [im,map]=rgb2ind(frame2im(getframe(f)),256);
+        if n==1
+            imwrite(im,map,gifPath,'gif','LoopCount',Inf,'DelayTime',0.1);
+        else
+            imwrite(im,map,gifPath,'gif','WriteMode','append','DelayTime',0.1);
+        end
+    end
 end
 end

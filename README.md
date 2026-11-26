@@ -1,250 +1,132 @@
-# Wheeled Mobile Manipulator Planning and Tracking
+# Wheeled Mobile Manipulator: Motion Planning and Control
 
-A differential-drive base carries a three-joint arm through a coordinated maneuver. Follow the axle path, inspect the joint errors, and compare the torque needed to reject a wheel disturbance.
+How can a mobile base and an arm execute a coordinated motion while respecting the robot's kinematics and dynamics? What happens when a disturbance pushes the robot away from its reference?
 
-![Nominal and adaptive axle paths and angular tracking error](adaptive-control/comparison.png)
+I study these questions using a differential-drive mobile manipulator with two actuated wheels and a three-joint arm. The project connects motion planning, kinematic coordination and torque-level tracking, then investigates adaptive disturbance rejection.
 
-**Start with the adaptive MATLAB demo.** In the asymmetric constant-disturbance simulation, adaptation reduced time-weighted angular tracking RMS from **3.045 to 0.137 rad** while increasing RMS torque from **12.26 to 13.64 N·m**. [Run the experiment, inspect the derivation, and replay the robot](adaptive-control/README.md)
+<p align="center">
+  <img src="adaptive-control/nominal-vs-adaptive.gif" alt="Animated comparison of the nominal and adaptive mobile manipulator trajectories" width="680">
+</p>
+
+*Simulation of the high asymmetric torque-disturbance case. The dashed reference is the axle path; blue is nominal feedback linearization and red is adaptive feedback linearization. Both robots execute the same desired maneuver.*
+
+[Run the adaptive demo](#run-the-demo) · [Three-layer architecture](#planning-to-control) · [Results](#adaptive-disturbance-rejection) · [Project report (PDF)](report/Muhammed_Elyamani_paper.pdf)
+
+## Why this problem matters
+
+The base and arm are mechanically coupled. A differential-drive base cannot move sideways at its axle, and a change in the arm configuration changes the coupled dynamics. A geometric path alone does not specify how to execute the motion. The planner must generate time-parameterized references compatible with the kinematics, and the controller must turn those references into actuator commands.
+
+At the task level, different base and arm configurations can lead to the same end-effector pose. The original framework studies a prescribed base/arm maneuver; it does not solve a general redundant task-space optimization or obstacle-avoidance problem.
+
+## Planning to control
+
+The original framework is organized into three layers, from the task to the actuators.
+
+| Layer | Input → output | Implementation |
+| --- | --- | --- |
+| **3 — Motion planning** | Start/goal base poses and arm angles → smooth position, velocity and acceleration references | Rotate–translate–rotate base path, quintic timing, joint-space arm planner |
+| **2 — Kinematic coordination** | Reference and robot state → admissible wheel and joint rate commands | Kanayama-style base tracking and arm velocity PD |
+| **1 — Dynamic tracking** | Desired reduced-coordinate motion and robot state → actuator torques | Reduced-coordinate feedback linearization |
+
+<p align="center">
+  <img src="media/demo/offline_motion_planner_block_diagram.png" alt="Original offline planning architecture" width="720">
+</p>
+
+*Original planning architecture. The implementation also has an optional online kinematic correction mode. Evaluating a prescribed reference online is not online replanning.*
+
+### Model and controller
+
+The robot has eight configuration coordinates and five independent wheel/arm rates. With $\eta=[\theta_r,\theta_l,q_1,q_2,q_3]^T$, the nonholonomic velocity constraint is represented by
+
+$$
+\dot q=R(q)\dot\eta.
+$$
+
+The original reduced model and torque controller are
+
+$$
+M_1(q)\ddot\eta+(C_1(q,\dot q)+D_\eta)\dot\eta+G_1(q)=B_1(q)\tau,
+$$
+
+$$
+e=\eta-\eta_d,\qquad v=\ddot\eta_d-K_d\dot e-K_p e,
+$$
+
+$$
+\tau=B_1(q)^{-1}\left[M_1(q)v+(C_1(q,\dot q)+D_\eta)\dot\eta+G_1(q)\right].
+$$
+
+The implementation uses a linear solve rather than forming the inverse explicitly. The planner uses quintic time scaling, $\sigma(s)=10s^3-15s^4+6s^5$, for zero velocity and acceleration at segment endpoints.
+
+[Original controller](wheeled_manipulator_framework/control/controllers/mm_closed_loop_dynamics.m) · [Reference builder](wheeled_manipulator_framework/control/controllers/plannar_controller/mm_build_eta_reference.m) · [Derivations](report/report.tex)
+
+## Adaptive disturbance rejection
+
+The newer, self-contained benchmark uses a corrected axle-centered reduced model and the same offline reference for two controllers: nominal feedback linearization and feedback linearization with an online estimate of the matched actuator disturbance. It does **not** exercise the original Layer-2 kinematic correction loop or introduce an adaptive planner.
+
+![Axle paths and angular tracking error under the high asymmetric disturbance](adaptive-control/comparison.png)
+
+| Disturbance case | Nominal RMS error (rad) | Adaptive RMS error (rad) | Reduction |
+| --- | ---: | ---: | ---: |
+| Moderate constant | 0.754 | 0.041 | 94.53% |
+| High asymmetric constant | 3.045 | 0.137 | 95.52% |
+| Sinusoidal | 0.956 | 0.213 | 77.77% |
+
+In the high case, the time-weighted RMS norm of the five angular tracking errors falls from **3.045 to 0.137 rad**, while RMS commanded torque norm rises from **12.26 to 13.64 N·m**. This comparison shows the tracking/effort trade-off for the tested model, not a general robustness guarantee. Net signed actuator work is reported separately; it is not electrical energy consumption.
+
+[Adaptive formulation, assumptions and model checks](adaptive-control/README.md) · [Numerical results](adaptive-control/results.csv) · [Parameters](adaptive-control/parameters.json)
+
+## Run the demo
+
+Start with the self-contained adaptive benchmark. From the repository root in MATLAB:
 
 ```matlab
 cd('adaptive-control')
-run_demo(true)
+results = run_demo();
 ```
 
-The sections below describe the earlier planning and tracking framework, its original model, and the historical report figures. The adaptive benchmark rebuilds the dynamics around the axle midpoint and includes independent physics checks.
-
-## Overview
-
-The project studies a differential-drive mobile manipulator with two actuated wheels and a 3-DOF serial arm.
-
-The implemented stack follows three layers:
-
-| Layer | Role | Main idea |
-|---|---|---|
-| Layer 3 | Motion planning | Generate smooth base and arm references. |
-| Layer 2 | Kinematic coordination | Convert planned motion into admissible base/arm velocity commands. |
-| Layer 1 | Dynamic tracking | Use reduced-coordinate feedback linearization to track the generated references at the torque level. |
-
-The report evaluates planner-only behavior, disturbance cases, and the full three-layer stack using tracking error, torque, power, and accumulated energy plots.
-
-## Research / Engineering Motivation
-
-Mobile manipulation requires more than a geometric path. The base and arm must move together while respecting:
-
-- nonholonomic differential-drive constraints,
-- base-arm coupling,
-- smooth reference generation,
-- kinematic tracking,
-- torque-level dynamics,
-- robustness under disturbances,
-- effort and energy metrics.
-
-This repository supports my broader robotics/control research identity by showing a concrete planning-and-tracking workflow for mobile manipulation.
-
-## What Is Implemented
-
-- Constraint-consistent reduced-coordinate modeling using independent coordinates `eta`.
-- Base trajectory generation in `SE(2)` using rotate-translate-rotate motion with quintic timing.
-- Arm joint-space trajectory generation using quintic polynomials.
-- Reference builder for `eta`, `eta_dot`, and `eta_ddot`.
-- Kanayama-style base kinematic tracking.
-- Arm velocity PD coordination.
-- Torque-level feedback-linearization tracking.
-- Disturbance injection at the torque level.
-- Post-processing for wheel/arm torques, power, energy, and tracking error.
-- MATLAB live scripts, functions, tests, report figures, and presentation visuals.
-
-## Mathematical Core
-
-The implementation uses independent reduced coordinates for the two wheel angles and three arm joints:
-
-$$
-\eta =
-\begin{bmatrix}
-\theta_r & \theta_l & q_1 & q_2 & q_3
-\end{bmatrix}^{T},
-\qquad
-\dot{q}=R(q)\dot{\eta}.
-$$
-
-The reduced dynamics tracked by the low-level controller are:
-
-$$
-M_1(q)\ddot{\eta}
-+\left(C_1(q,\dot{q})+D_{\eta}\right)\dot{\eta}
-+G_1(q)
-=B_1(q)\tau.
-$$
-
-The feedback-linearization layer shapes the reduced-coordinate tracking error with:
-
-$$
-e=\eta-\eta_d,
-\qquad
-\dot{e}=\dot{\eta}-\dot{\eta}_d,
-$$
-
-$$
-v=\ddot{\eta}_d-K_d\dot{e}-K_p e,
-$$
-
-then computes the actuator torques:
-
-$$
-\tau =
-B_1(q)^{-1}
-\left[
-M_1(q)v
-+\left(C_1(q,\dot{q})+D_{\eta}\right)\dot{\eta}
-+G_1(q)
-\right].
-$$
-
-The planner uses quintic time scaling for smooth segment transitions:
-
-$$
-\sigma(s)=10s^3-15s^4+6s^5,
-\qquad
-s\in[0,1].
-$$
-
-Full derivations and experiment details are provided in the project paper.
-
-## Demo Gallery
-
-The images below are real public artifacts from the project presentations and report.
-
-### Planning and Coordination Flowcharts
-
-| Base planner | Arm planner | Kinematic tracking |
-|---|---|---|
-| ![Base planner flowchart](media/demo/base_planner_flowchart.png) | ![Arm planner flowchart](media/demo/arm_planner_flowchart.png) | ![Kanayama tracking flowchart](media/demo/kanayama_tracking_flowchart.png) |
-
-### Conceptual Block Diagrams
-
-| Offline motion-planner framework | Feedback-linearization tracking structure |
-|---|---|
-| ![Offline motion-planner framework block diagram](media/demo/offline_motion_planner_block_diagram.png) | ![Feedback-linearization tracking block diagram](media/demo/feedback_linearization_block_diagram.jpeg) |
-
-### Simulation Outputs
-
-| Planner-only base path | Full stack under disturbance | Tracking error under disturbance |
-|---|---|---|
-| ![Planner-only base path](media/demo/planner_only_base_path.png) | ![Full stack base path under disturbance](media/demo/full_stack_base_path_disturbance.png) | ![Full stack eta tracking error](media/demo/full_stack_tracking_error_eta.png) |
-
-## Repository Structure
-
-```text
-wheeled_manipulator_framework/
-  control/        planner, kinematic controller, feedback-linearization tracker, tests
-  models/         symbolic/numeric dynamics, reduced model utilities, generated functions
-  figures/        paper/result figures
-  docs/           report PDF, slides, references, auxiliary documents
-  tests/          MATLAB checks for model/constraint components
-
-report/           paper source, compiled PDF, and paper figures
-presentations/    progress slides and exported flowchart images
-mobile_robot/     earlier mobile-robot planning/control exercises
-media/demo/       README demo images copied from real project artifacts
-```
-
-## Main Entry Points
-
-Primary full-stack workflow:
-
-```text
-wheeled_manipulator_framework/control/main_controller.mlx
-```
-
-Model-side tracking workflow:
-
-```text
-wheeled_manipulator_framework/models/9_mm_main_fb_lin_tracking.mlx
-```
-
-Core MATLAB function entry point:
-
-```text
-wheeled_manipulator_framework/control/controllers/mm_main_controller.m
-```
-
-Planner/controller modules:
-
-```text
-wheeled_manipulator_framework/control/controllers/plannar_controller/
-wheeled_manipulator_framework/control/controllers/kinematic_controller/
-wheeled_manipulator_framework/control/controllers/low_level_control_tracker/
-```
-
-## How to Run
-
-The instructions below document the original MATLAB workflow. A fresh run on a clean installation has not been independently verified.
-
-Open MATLAB from the repository root, then add the framework folders to the MATLAB path.
-
-Typical workflow:
+The benchmark uses core MATLAB functions (previously tested with R2025a Update 1, as documented in the project). It runs model checks, simulates the three disturbance cases with both controllers, and exports the comparison plot and CSV. To see both robots in 3-D:
 
 ```matlab
-addpath(genpath("wheeled_manipulator_framework"))
+run_demo(true);
+% Optional: export a local GIF from the MATLAB simulation
+run_demo(true, fullfile(pwd,'nominal-vs-adaptive-local.gif'));
 ```
 
-Then open and run:
+The committed animation is a separate RK4 replay of the same high case; the MATLAB export uses ODE45 and a different visualization. See the [animation provenance](adaptive-control/README.md#animation).
 
-```text
-wheeled_manipulator_framework/control/main_controller.mlx
-```
+For the earlier full-stack experiments, see the [legacy framework instructions](wheeled_manipulator_framework/README.md). That workflow uses MATLAB live scripts and generated model data, and is not yet verified from a clean clone.
 
-The full-stack script generates planner references, simulates closed-loop dynamics, post-processes torque/energy, and plots the results.
+## Original simulation experiments
 
-Alternative focused script:
+These are historical report figures, not outputs of the newer adaptive benchmark.
 
-```text
-wheeled_manipulator_framework/models/9_mm_main_fb_lin_tracking.mlx
-```
+| Planner only | Full stack under disturbance | Reduced-coordinate tracking error |
+| --- | --- | --- |
+| ![Planner-only base path](media/demo/planner_only_base_path.png) | ![Full stack base path under disturbance](media/demo/full_stack_base_path_disturbance.png) | ![Full stack angular tracking error](media/demo/full_stack_tracking_error_eta.png) |
 
-Use this for Layer-1/reduced-dynamics tracking checks.
+The report considers dynamic tracking alone (E1), planner-only references (E2), disturbed execution without full feedback compensation (E3), and the full stack under disturbance (E4). See the [report](report/Muhammed_Elyamani_paper.pdf) and [saved figures](report/figures).
 
-## Experiment Groups
+## Repository guide
 
-The report figures organize the work into four experiment groups:
+| Path | Contents |
+| --- | --- |
+| [adaptive-control/](adaptive-control/) | Self-contained benchmark, model checks, adaptive controller, results and animation |
+| [wheeled_manipulator_framework/](wheeled_manipulator_framework/) | Original three-layer MATLAB framework, symbolic/generated dynamics, controllers and tests |
+| [report/](report/) | Project manuscript, LaTeX source and historical figures |
+| [presentations/](presentations/) | Planning and tracking presentations |
+| [experiments/](experiments/) · [mobile_robot/](mobile_robot/) | Earlier exploratory modeling and mobile-robot exercises |
+| [media/demo/](media/demo/) | Original project diagrams and selected result figures |
 
-| Group | Purpose | Example figures |
-|---|---|---|
-| E1 | Layer 1 only: dynamic tracking focus | `E1_layer1_only_base_path_world.png` |
-| E2 | Planner only: smooth open-loop reference generation | `E2_planner_only_base_path_world.png`, `E2_planner_only_eta.png` |
-| E3 | Disturbance without full feedback compensation | `E3_dist_base_path_world.png`, `E3_dist_eta.png` |
-| E4 | Full stack under disturbance | `E4_dist_base_path_world.png`, `E4_dist_full_tracking_error_eta.png`, torque/power/energy figures |
+## Scope and limitations
 
-## Report and Presentation Artifacts
+- All shown results are simulations with prescribed references; no physical robot validation is claimed.
+- The adaptive benchmark assumes exact model knowledge, effective rotational inertias, matched actuator disturbances and unsaturated commands. Its tests cover model identities and three deterministic cases.
+- The legacy workflow still requires generated MAT files and path cleanup. Its online kinematic correction mode also needs a consistent reference-derivative and torque-logging audit before claiming a fully reproduced closed-loop result.
+- Task-space optimization, collision avoidance, actuator limits, state-estimation errors and hardware validation remain outside the demonstrated scope.
 
-- [Project paper PDF](report/Muhammed_Elyamani_paper.pdf)
-- [Report source](report/report.tex)
-- [Motion-planning presentation](presentations/progress2/Muhammed%20Elyamani%20-%20Motion%20planning%20for%20a%20Wheeled%20Mobile%20Manipulator.pptx)
-- [Trajectory-tracking presentation](presentations/progress1/Muhammed%20Elyamani%20-%20Trajectory%20Tracking%20in%20Wheeled%20Mobile%20Manipulator.pptx)
+## Credits
 
-## Limitations
+Original project report: Muhammed Elyamani, Ali Attyatullah Mohammed AlBeladi and Brahim Brahmi, *Motion Planning and Control of a Differential-Drive Mobile Manipulator*.
 
-- The current results are simulation-based.
-- The main public scenario is fixed and report-oriented.
-- The planner is primarily offline, with online/replanning extensions left for future work.
-- Hardware experiments, state-estimation noise, actuator saturation, friction, and delay effects are not fully treated here.
-- Some scripts are MATLAB live scripts and may require path/toolbox cleanup on a new machine.
-
-## Roadmap
-
-- [ ] Make the main run workflow fully command-line reproducible.
-- [ ] Add a short experiment log describing how each report figure was generated.
-- [ ] Add a compact table of tracking-error, torque, power, and energy metrics.
-- [ ] Clean up path assumptions in MATLAB scripts.
-- [ ] Add a public-safe video or GIF when generated from the real simulation.
-
-## Citation / Acknowledgment
-
-This repository supports the project report/manuscript (publication status is not asserted here):
-
-```text
-Muhammed Elyamani, Ali Attyatullah Mohammed AlBeladi, and Brahim Brahmi,
-"Motion Planning and Control of a Differential-Drive Mobile Manipulator."
-```
-
-Please cite or acknowledge the project report/paper if you use or adapt this framework.
+The adaptive benchmark develops Muhammed Elyamani's SCE 527 project on the earlier framework. See the [project report](report/Muhammed_Elyamani_paper.pdf) and [adaptive notes](adaptive-control/README.md). Publication status is not asserted.
