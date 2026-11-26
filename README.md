@@ -1,8 +1,17 @@
 # Wheeled Mobile Manipulator Planning and Tracking
 
-MATLAB framework for generating and tracking whole-body trajectories for a differential-drive mobile manipulator with a 3-DOF arm.
+A differential-drive base carries a three-joint arm through a coordinated maneuver. Follow the axle path, inspect the joint errors, and compare the torque needed to reject a wheel disturbance.
 
-This repository contains the public project code, report artifacts, presentation visuals, and simulation figures for a layered planning-and-control stack. The work is not only trajectory tracking: it also generates smooth base and arm references, coordinates them kinematically, and tracks the resulting reduced-coordinate trajectory at the torque level.
+![Nominal and adaptive axle paths and angular tracking error](adaptive-control/comparison.png)
+
+**Start with the adaptive MATLAB demo.** In the asymmetric constant-disturbance simulation, adaptation reduced time-weighted angular tracking RMS from **3.045 to 0.137 rad** while increasing RMS torque from **12.26 to 13.64 N·m**. [Run the experiment, inspect the derivation, and replay the robot](adaptive-control/README.md)
+
+```matlab
+cd('adaptive-control')
+run_demo(true)
+```
+
+The sections below describe the earlier planning and tracking framework, its original model, and the historical report figures. The adaptive benchmark rebuilds the dynamics around the axle midpoint and includes independent physics checks.
 
 ## Overview
 
