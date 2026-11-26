@@ -86,7 +86,7 @@ cd wmm-planning-and-tracking
 matlab -batch "reproduce"
 ```
 
-The command runs the physics checks and six adaptive-benchmark simulations, compares all 21 numerical metrics with the committed CSV, and executes the original three-layer controller with online kinematic correction. It writes the comparison plot, benchmark table and legacy trajectory to `results/`. A successful run prints `Reproduction passed`. The legacy case runs for 10 s and gives approximately **89.730 J** of net commanded actuator work.
+The command runs the physics checks and six adaptive-benchmark simulations, compares all 21 numerical metrics with the committed CSV, and executes the original three-layer controller with online kinematic correction. It writes the comparison plot, benchmark table and legacy trajectory to `results/`. A successful run prints `Reproduction passed`. The legacy case runs for 10 s. The runner checks both signed actuator work (**89.730 J**) and the final mount pose (**2.01491 m, 2.02025 m, 1.59512 rad**). Both the interactive demo and the batch command write generated tables and plots under `results/` by default.
 
 To replay the corrected benchmark interactively in MATLAB:
 

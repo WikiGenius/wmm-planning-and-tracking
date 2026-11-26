@@ -3,8 +3,12 @@ function results = run_demo(showAnimation,gifPath,outputDir)
 if nargin<1, showAnimation=false; end
 if nargin<2, gifPath=''; end
 root=fileparts(mfilename('fullpath'));
-if nargin<3 || isempty(outputDir), outputDir=root; end
+if nargin<3 || isempty(outputDir), outputDir=fullfile(fileparts(root),'results'); end
 if ~isfolder(outputDir), mkdir(outputDir); end
+[~, destination] = fileattrib(outputDir);
+if strcmpi(destination.Name,root)
+    error('run_demo:BaselineDirectory','Choose an output folder outside the committed baseline directory.');
+end
 cfg=jsondecode(fileread(fullfile(root,'parameters.json')));
 p=cfg.phys;
 verify_model(p);

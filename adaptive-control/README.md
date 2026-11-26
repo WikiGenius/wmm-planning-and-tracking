@@ -13,7 +13,7 @@ cd('adaptive-control')
 results = run_demo();
 ```
 
-Use `run_demo(true)` to replay both high-disturbance trajectories in 3-D. Each invocation checks the model, runs six ten-second simulations, and writes the results table and comparison figure beside the code.
+Use `run_demo(true)` to replay both high-disturbance trajectories in 3-D. Each invocation checks the model, runs six ten-second simulations, and writes the results table and comparison figure under the repository’s ignored `results/` folder.
 
 | Matched torque disturbance | Nominal RMS (rad) | Adaptive RMS (rad) | Reduction |
 | --- | ---: | ---: | ---: |
