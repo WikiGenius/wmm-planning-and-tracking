@@ -95,7 +95,7 @@ cd('adaptive-control')
 run_demo(true)
 ```
 
-For the presentation animation and its provenance, see the [animation notes](adaptive-control/README.md#animation). For the original model and its live-script entry points, see the [framework instructions](wheeled_manipulator_framework/README.md).
+The committed GIF is the original May 2026 course presentation animation. To export the corrected ODE45 replay separately, run `run_demo(true, fullfile(pwd,'nominal-vs-adaptive-local.gif'))` from `adaptive-control/`. See the [animation notes](adaptive-control/README.md#animation). For the original model and its live-script entry points, see the [framework instructions](wheeled_manipulator_framework/README.md).
 
 ## Original simulation experiments
 
