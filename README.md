@@ -8,7 +8,7 @@ I study these questions using a differential-drive mobile manipulator with two a
   <img src="adaptive-control/nominal-vs-adaptive.gif" alt="Animated comparison of the nominal and adaptive mobile manipulator trajectories" width="680">
 </p>
 
-*Simulation of the high asymmetric torque-disturbance case. The dashed reference is the axle path; blue is nominal feedback linearization and red is adaptive feedback linearization. Both robots execute the same desired maneuver.*
+*Original May 2026 simulation animation (course presentation, slide 11). Black dashed: reference; blue: nominal feedback linearization; red: adaptive feedback linearization. Both controllers track the same reference. This is the original mount-path visualization, not a replay of the corrected benchmark below.*
 
 [Run the adaptive demo](#run-the-demo) · [Three-layer architecture](#planning-to-control) · [Results](#adaptive-disturbance-rejection) · [Project report (PDF)](report/Muhammed_Elyamani_paper.pdf)
 
@@ -93,7 +93,7 @@ run_demo(true);
 run_demo(true, fullfile(pwd,'nominal-vs-adaptive-local.gif'));
 ```
 
-The committed animation is a separate RK4 replay of the same high case; the MATLAB export uses ODE45 and a different visualization. See the [animation provenance](adaptive-control/README.md#animation).
+The committed animation is the original GIF from my May 2026 course presentation. The MATLAB export generates a new visualization of the corrected ODE45 benchmark. See the [animation provenance](adaptive-control/README.md#animation).
 
 For the earlier full-stack experiments, see the [legacy framework instructions](wheeled_manipulator_framework/README.md). That workflow uses MATLAB live scripts and generated model data, and is not yet verified from a clean clone.
 
