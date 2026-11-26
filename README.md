@@ -78,24 +78,24 @@ In the high case, the time-weighted RMS norm of the five angular tracking errors
 
 ## Run the demo
 
-Start with the self-contained adaptive benchmark. From the repository root in MATLAB:
+From a fresh checkout, run the following in a terminal with MATLAB on the path. Tested with MATLAB R2025a Update 1 on Windows.
+
+```sh
+git clone --depth 1 https://github.com/WikiGenius/wmm-planning-and-tracking.git
+cd wmm-planning-and-tracking
+matlab -batch "reproduce"
+```
+
+The command runs the physics checks and six adaptive-benchmark simulations, compares all 21 numerical metrics with the committed CSV, and executes the original three-layer controller with online kinematic correction. It writes the comparison plot, benchmark table and legacy trajectory to `results/`. A successful run prints `Reproduction passed`. The legacy case runs for 10 s and gives approximately **89.730 J** of net commanded actuator work.
+
+To replay the corrected benchmark interactively in MATLAB:
 
 ```matlab
 cd('adaptive-control')
-results = run_demo();
+run_demo(true)
 ```
 
-The benchmark uses core MATLAB functions (previously tested with R2025a Update 1, as documented in the project). It runs model checks, simulates the three disturbance cases with both controllers, and exports the comparison plot and CSV. To see both robots in 3-D:
-
-```matlab
-run_demo(true);
-% Optional: export a local GIF from the MATLAB simulation
-run_demo(true, fullfile(pwd,'nominal-vs-adaptive-local.gif'));
-```
-
-The committed animation is the original GIF from my May 2026 course presentation. The MATLAB export generates a new visualization of the corrected ODE45 benchmark. See the [animation provenance](adaptive-control/README.md#animation).
-
-For the earlier full-stack experiments, see the [legacy framework instructions](wheeled_manipulator_framework/README.md). That workflow uses MATLAB live scripts and generated model data, and is not yet verified from a clean clone.
+For the presentation animation and its provenance, see the [animation notes](adaptive-control/README.md#animation). For the original model and its live-script entry points, see the [framework instructions](wheeled_manipulator_framework/README.md).
 
 ## Original simulation experiments
 
@@ -122,7 +122,7 @@ The report considers dynamic tracking alone (E1), planner-only references (E2), 
 
 - All shown results are simulations with prescribed references; no physical robot validation is claimed.
 - The adaptive benchmark assumes exact model knowledge, effective rotational inertias, matched actuator disturbances and unsaturated commands. Its tests cover model identities and three deterministic cases.
-- The legacy workflow still requires generated MAT files and path cleanup. Its online kinematic correction mode also needs a consistent reference-derivative and torque-logging audit before claiming a fully reproduced closed-loop result.
+- The legacy online controller changes desired velocity while retaining offline position and acceleration references. Its trajectory can be reproduced, but the ideal derivative-consistent tracking proof applies only under its stated assumptions.
 - Task-space optimization, collision avoidance, actuator limits, state-estimation errors and hardware validation remain outside the demonstrated scope.
 
 ## Credits

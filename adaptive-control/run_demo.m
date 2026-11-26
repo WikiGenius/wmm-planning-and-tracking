@@ -1,8 +1,10 @@
-function results = run_demo(showAnimation,gifPath)
+function results = run_demo(showAnimation,gifPath,outputDir)
 % Run all comparisons. Pass true for 3-D playback; optionally give a GIF path.
 if nargin<1, showAnimation=false; end
 if nargin<2, gifPath=''; end
 root=fileparts(mfilename('fullpath'));
+if nargin<3 || isempty(outputDir), outputDir=root; end
+if ~isfolder(outputDir), mkdir(outputDir); end
 cfg=jsondecode(fileread(fullfile(root,'parameters.json')));
 p=cfg.phys;
 verify_model(p);
@@ -34,7 +36,7 @@ results=array2table(data,'VariableNames',{'NominalRMS_rad','AdaptiveRMS_rad',...
     'Reduction_pct','NominalTorqueRMS_Nm','AdaptiveTorqueRMS_Nm',...
     'NominalWork_J','AdaptiveWork_J'},'RowNames',cellstr(names));
 disp(results);
-writetable(results,fullfile(root,'results.csv'),'WriteRowNames',true);
+writetable(results,fullfile(outputDir,'results.csv'),'WriteRowNames',true);
 figure('Color','w','Position',[100 100 960 390]);
 tiledlayout(1,2);
 nexttile; hold on
@@ -47,7 +49,7 @@ title('Axle path'); legend('Nominal','Adaptive','Reference','Location','best');
 nexttile; plot(t,[high(1).error high(2).error],'LineWidth',2);
 grid on; xlabel('Time (s)'); ylabel('Joint-space error norm (rad)');
 title('Tracking under asymmetric torque bias'); legend('Nominal','Adaptive');
-exportgraphics(gcf,fullfile(root,'comparison.png'),'Resolution',140);
+exportgraphics(gcf,fullfile(outputDir,'comparison.png'),'Resolution',140);
 if showAnimation || ~isempty(gifPath), playback_comparison(high,p,t,gifPath); end
 end
 

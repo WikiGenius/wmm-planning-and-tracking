@@ -12,17 +12,18 @@ This folder preserves the original planning, kinematic coordination and dynamic 
 
 The [closed-loop dynamics](control/controllers/mm_closed_loop_dynamics.m) selects whether to use the precomputed reference alone or add online kinematic velocity corrections. The [controller initializer](control/controllers/mm_controller_init.m) currently sets the online flag to true.
 
-## Original workflow (reproduction not yet verified)
+## Run the original controller
 
-The original entry points are [control/main_controller.mlx](control/main_controller.mlx) and [models/9_mm_main_fb_lin_tracking.mlx](models/9_mm_main_fb_lin_tracking.mlx). The function [mm_main_controller.m](control/controllers/mm_main_controller.m) is another driver. MATLAB and any toolboxes used by the original live scripts are needed, including Symbolic Math Toolbox for regeneration of symbolic dynamics. The original base planner calls wrapToPi; its availability must also be checked.
-
-From the repository root, add the framework to the MATLAB path:
+From the repository root, run `matlab -batch "reproduce"` for the numerical benchmark and the legacy trajectory. For the original plots, run the following in MATLAB:
 
 ```matlab
-addpath(genpath('wheeled_manipulator_framework'));
+addpath(fullfile(pwd,'wheeled_manipulator_framework','control','controllers'))
+trajectory = mm_main_controller();
 ```
 
-Before executing the historical live scripts, prepare their generated model data. The repository tracks generated numeric functions and parameter JSON but does not track the required mm_params.mat and mm_dynamics_reduced.mat files (MAT files are ignored). Review the [parameter builder](models/dynamics_library/mm_params_build_save_load.m) and the model-generation live scripts in [models/](models/). The data must be generated or restored to a location accessible to MATLAB. The function driver also contains relative path assumptions that need correction for a clean checkout. The top-level setup_project.m is an older starter scaffold, not an installer for the complete framework.
+The driver returns time, 13 state channels, five commanded torques and cumulative signed actuator work. The torque post-processor evaluates the same feedback command used during integration, including online velocity corrections. The injected disturbance is excluded from commanded work.
+
+The public checkout includes the original runtime inputs in `models/data/`. The five generated model functions and parameter JSON were matched against the source archive before restoring the two MAT files. Symbolic regeneration is a separate authoring workflow. For the full-stack live script run `run('wheeled_manipulator_framework/control/main_controller.mlx')`. For the standalone model-side tracking demonstration run `run('wheeled_manipulator_framework/models/mm_main_fb_lin_tracking.mlx')`. Both commands start at the repository root. The root `setup_project.m` is the historical scaffold generator.
 
 ## Historical experiments
 
@@ -37,9 +38,7 @@ See the [original report](../report/Muhammed_Elyamani_paper.pdf), [figures](../r
 
 ## Remaining technical checks
 
-- Restore or regenerate model MAT files and verify the full-stack run from a fresh clone.
 - Check consistency of position, velocity and acceleration references in online correction mode; the current implementation changes velocity while retaining the offline position and acceleration references.
-- Compute torque and signed mechanical work from the actual online controller commands: the existing post-processor reconstructs torques from offline references, so online-mode energy figures require verification.
 - Audit mount/axle frame consistency and boundary cases; do not transfer the adaptive benchmark's numerical checks to this model.
 
 Credit: Muhammed Elyamani, Ali Attyatullah Mohammed AlBeladi and Brahim Brahmi, *Motion Planning and Control of a Differential-Drive Mobile Manipulator*. The archived report documents the original implementation.

@@ -1,4 +1,4 @@
-function mm_main_controller()
+function result = mm_main_controller(showPlots)
 %MM_MAIN_CONTROLLER
 %  Top-level script for mobile manipulator closed-loop simulation.
 %
@@ -12,18 +12,16 @@ function mm_main_controller()
 %    7) Post-process: control efforts + control energy
 %    8) Plot all results
 
-    clc; close all;
+    if nargin == 0, showPlots = true; end
     fprintf('▶ Starting mobile manipulator tracking simulation...\n');
 
     %% --------------------------------------------------------------
     % 1) Paths
     %% --------------------------------------------------------------
-    project_root = fileparts(mfilename('fullpath'));
-    addpath(fullfile(project_root, 'dynamics_library'));
-    addpath(fullfile(project_root, 'controllers'));
-    addpath(fullfile(project_root, 'data'));
-    addpath(fullfile(project_root, 'transformations'));
-    fprintf('💠 Paths added.\n');
+    controllers = fileparts(mfilename('fullpath'));
+    framework = fileparts(fileparts(controllers));
+    addpath(genpath(controllers));
+    addpath(fullfile(framework,'models','data'), fullfile(framework,'models','dynamics_library'));
 
     %% --------------------------------------------------------------
     % 2) Load physical parameters
@@ -95,10 +93,12 @@ function mm_main_controller()
     %% --------------------------------------------------------------
     % 10) Visualization
     %% --------------------------------------------------------------
-    theme = 'light';
-    mm_plot_results_controller(t_sol, X_sol, ctrl, ...
-        base_ref_all, arm_ref_all, phys, ...
-        tau_sol, E_sol, theme);
+    result = struct('time',t_sol,'state',X_sol,'torque',tau_sol,'work',E_sol);
+    assert(abs(t_sol(end)-traj.Tf)<1e-10 && all(isfinite([X_sol tau_sol E_sol]),'all'), ...
+        'Legacy integration did not produce a complete finite trajectory.');
+    if showPlots
+        mm_plot_results_controller(t_sol,X_sol,ctrl,base_ref_all,arm_ref_all,phys,tau_sol,E_sol,'light');
+    end
 
     fprintf('✅ Simulation finished.\n');
 end

@@ -1,4 +1,4 @@
-function dX = mm_closed_loop_dynamics(t, X, simdata)
+function [dX,tau] = mm_closed_loop_dynamics(t, X, simdata)
 %MM_CLOSED_LOOP_DYNAMICS
 %  Three-layer architecture:
 %
@@ -146,15 +146,8 @@ function dX = mm_closed_loop_dynamics(t, X, simdata)
     % Total torque:
     %   u_total = u_ctrl + u_dist
 
-    u_fun = @(t_local, q_local, eta_dot_local) ...
-        ( ...
-            mm_fb_lin_tracker( ...
-                t_local, ...
-                [q_local; eta_dot_local], ...    % X_local
-                eta_d, eta_dot_d, eta_ddot_d, ...% dynamic refs
-                gains_eta, phys) ...
-          + dist_fun(t_local, q_local, eta_dot_local) ...
-        );
+    tau = mm_fb_lin_tracker(t,X,eta_d,eta_dot_d,eta_ddot_d,gains_eta,phys);
+    u_fun = @(tk,qk,uk) tau + dist_fun(tk,qk,uk);
 
     %% -----------------------------
     % 7) Run reduced dynamics

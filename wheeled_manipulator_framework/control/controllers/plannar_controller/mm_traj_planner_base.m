@@ -58,8 +58,8 @@ function base_ref = mm_traj_planner_base(t, traj, phys)
         theta_line = atan2(dyM, dxM);
     end
 
-    dtheta1 = wrapToPi(theta_line - th0);
-    dtheta2 = wrapToPi(thf       - theta_line);
+    dtheta1 = atan2(sin(theta_line - th0),cos(theta_line - th0));
+    dtheta2 = atan2(sin(thf       - theta_line),cos(thf       - theta_line));
 
     % --------------------------------------------------------------
     % 3) Segment times from nominal speeds
